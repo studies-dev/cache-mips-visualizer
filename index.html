@@ -1,21 +1,133 @@
-<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Cache MIPS · Laboratório interativo</title><script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script><style>*{box-sizing:border-box}body{margin:0;background:#0b1020;color:#eaf0fa;font:15px system-ui}main{max-width:1200px;margin:auto;padding:25px}h1{font-size:32px}h2{font-size:21px}p{color:#b2c0d5;line-height:1.6}.panel{background:#151d30;border:1px solid #33415a;border-radius:14px;padding:20px;margin:18px 0}.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.plot{height:390px}.matrix{display:grid;grid-template-columns:repeat(17,1fr);gap:2px}.cell{aspect-ratio:1;background:#28364d;border-radius:2px}.visited{background:#227d97}.block{background:#875777}.current{background:#ffca70;outline:1px solid white}select,button{background:#243149;color:white;border:1px solid #58677f;border-radius:7px;padding:9px;margin:6px;cursor:pointer}input{width:35%;vertical-align:middle}.stats{display:flex;gap:15px;flex-wrap:wrap}.stats strong{font-size:22px;color:#57c7e9}.stats span{background:#202b40;padding:14px;border-radius:8px}.note{background:#203248;border-left:3px solid #57c7e9;padding:12px;color:#d6e6f6}a{color:#75d9f5}@media(max-width:750px){.grid{grid-template-columns:1fr}.plot{height:340px}}</style></head><body><main><p>Arquitetura de computadores · MIPS · 17 × 17 · 289 acessos</p><h1>Cache MIPS na prática</h1><p>São 56 medições com cache de 256 bytes, associatividade por conjuntos e política LRU. Passe o mouse nos gráficos para conferir os resultados.</p><section class="panel"><h2>1. Mapas de calor</h2><p>Veja como o tamanho dos blocos e o número de vias afetam os hits. Os espaços em branco são configurações que não cabem nessa cache.</p><div class="grid"><div id="hr" class="plot"></div><div id="hc" class="plot"></div></div></section><section class="panel"><h2>2. Compare por número de vias</h2><label>Vias <select id="way"></select></label><div id="lines" class="plot"></div></section><section class="panel"><h2>3. Veja uma configuração de perto</h2><label>Palavras/bloco <select id="words"></select></label><label>Vias <select id="ways"></select></label><div class="stats"><span>Conjuntos: <strong id="sets"></strong></span><span>Row-major: <strong id="rr"></strong></span><span>Column-major: <strong id="cr"></strong></span></div><div id="bars" class="plot"></div></section><section class="panel"><h2>4. Acompanhe o percurso na matriz</h2><p>Amarelo é a palavra atual, azul marca as que já foram visitadas e roxo mostra as outras palavras do mesmo bloco. Aqui você vê a ordem dos acessos, sem simular os hits.</p><label>Percurso <select id="mode"><option value="R">Row-major</option><option value="C">Column-major</option></select></label><label>Palavras/bloco <select id="bw"></select></label><div id="matrix" class="matrix"></div><button id="prev">← Anterior</button><button id="next">Próximo →</button><button id="reset">Reiniciar</button><input type="range" id="step" min="0" max="288" value="0"><strong id="count"></strong><p id="address" class="note"></p></section><section class="panel"><h2>O que muda entre os percursos?</h2><p><strong>Row-major:</strong> percorre palavras vizinhas, avançando 4 bytes por acesso. Isso ajuda a aproveitar o bloco que já foi carregado. <strong>Column-major:</strong> salta 68 bytes entre as linhas. Alguns blocos podem sair da cache antes de serem usados de novo, dependendo dos conjuntos e do LRU.</p><p>Resultados medidos com os scripts MIPS do laboratório.</p></section><section class="panel" id="simulator"><h2>5. Teste sua própria cache</h2><p>Mude a matriz, o tamanho da cache e a política de substituição para comparar os resultados. Cada palavra tem 4 bytes, a cache começa vazia e os blocos são distribuídos entre conjuntos.</p><div class="grid"><div><label>Dimensão N × N <input id="sN" type="number" min="2" max="64" value="17"></label><label>Capacidade (palavras) <select id="sC"><option>16</option><option>32</option><option selected>64</option><option>128</option><option>256</option><option>512</option></select></label><label>Palavras/bloco <select id="sB"></select></label></div><div><label>Vias <select id="sA"></select></label><label>Política <select id="sP"><option>LRU</option><option>FIFO</option></select></label><label>Percurso <select id="sO"><option value="row">Row-major</option><option value="column">Column-major</option></select></label></div></div><p><button id="sRun">Simular</button><button id="sCompare">Comparar percursos</button><button id="sCsv">Exportar CSV</button></p><p id="sMsg" role="status"></p><div class="stats"><span>Acessos: <strong id="sTotal">—</strong></span><span>Hits: <strong id="sHits">—</strong></span><span>Misses: <strong id="sMisses">—</strong></span><span>Taxa: <strong id="sRate">—</strong></span><span>Conjuntos: <strong id="sSets">—</strong></span></div><div id="sPlot" class="plot"></div></section><section class="panel"><h2>6. Veja cada acesso</h2><p>Acompanhe os hits, misses e blocos armazenados durante cada percurso. Os dois têm controles separados e usam a configuração escolhida no simulador.</p><div class="panel" style="margin:10px 0"><h3>Script row-major</h3><p>Avança pelas linhas. Você pode pausar e voltar sem mexer no outro percurso.</p><button id="rowPrev">← Anterior</button> <button id="rowNext">Próximo →</button> <button id="rowPlay">Reproduzir</button> <button id="rowReset">Reiniciar</button><input id="rowStep" type="range" min="0" max="288" value="0" style="width:100%"><p id="rowDetail" class="note"></p><div class="stats"><span>Hits até aqui: <strong id="rowHits">0</strong></span><span>Misses até aqui: <strong id="rowMisses">0</strong></span></div><div class="grid"><div style="max-height:350px;overflow:auto"><h3>Conjuntos</h3><table id="rowCache" style="width:100%;text-align:left"></table></div><div style="max-height:350px;overflow:auto"><h3>Últimos 15 acessos</h3><table id="rowTrace" style="width:100%;text-align:left"></table></div></div></div><div class="panel" style="margin:10px 0"><h3>Script column-major</h3><p>Avança pelas colunas. Você pode pausar e voltar sem mexer no outro percurso.</p><button id="colPrev">← Anterior</button> <button id="colNext">Próximo →</button> <button id="colPlay">Reproduzir</button> <button id="colReset">Reiniciar</button><input id="colStep" type="range" min="0" max="288" value="0" style="width:100%"><p id="colDetail" class="note"></p><div class="stats"><span>Hits até aqui: <strong id="colHits">0</strong></span><span>Misses até aqui: <strong id="colMisses">0</strong></span></div><div class="grid"><div style="max-height:350px;overflow:auto"><h3>Conjuntos</h3><table id="colCache" style="width:100%;text-align:left"></table></div><div style="max-height:350px;overflow:auto"><h3>Últimos 15 acessos</h3><table id="colTrace" style="width:100%;text-align:left"></table></div></div></div></section></main><script>
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Cache MIPS · Laboratório interativo</title><script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script><style>*{box-sizing:border-box}body{margin:0;background:#0b1020;color:#eaf0fa;font:15px system-ui}main{max-width:1200px;margin:auto;padding:25px}h1{font-size:32px}h2{font-size:21px}p{color:#b2c0d5;line-height:1.6}.panel{background:#151d30;border:1px solid #33415a;border-radius:14px;padding:20px;margin:18px 0}.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.plot{height:390px}.matrix{display:grid;grid-template-columns:repeat(17,1fr);gap:2px}.cell{aspect-ratio:1;background:#28364d;border-radius:2px}.visited{background:#227d97}.block{background:#875777}.current{background:#ffca70;outline:1px solid white}select,button{background:#243149;color:white;border:1px solid #58677f;border-radius:7px;padding:9px;margin:6px;cursor:pointer}input{width:35%;vertical-align:middle}.stats{display:flex;gap:15px;flex-wrap:wrap}.stats strong{font-size:22px;color:#57c7e9}.stats span{background:#202b40;padding:14px;border-radius:8px}.note{background:#203248;border-left:3px solid #57c7e9;padding:12px;color:#d6e6f6}a{color:#75d9f5}@media(max-width:750px){.grid{grid-template-columns:1fr}.plot{height:340px}}
+/* Navegação: um playground por vez */
+.site-layout{display:grid;grid-template-columns:252px minmax(0,1fr);min-height:100vh;max-width:1600px;margin:0 auto}
+.sidebar{position:sticky;top:0;height:100dvh;min-height:560px;overflow-y:auto;background:#10192b;border-right:1px solid #33415a;padding:28px 14px 20px;display:flex;flex-direction:column;z-index:30}
+.sidebar-brand{display:flex;flex-direction:column;gap:6px;padding:8px 12px 22px}
+.sidebar-eyebrow{color:#57c7e9;letter-spacing:.16em;font-size:11px;font-weight:700}
+.sidebar-brand strong{font-size:23px;letter-spacing:-.025em}
+.sidebar-caption,.sidebar-footer{color:#9bacc5;font-size:12px;line-height:1.5}
+.sidebar-links{display:flex;flex-direction:column;gap:6px}
+.nav-item{width:100%;margin:0;display:flex;gap:12px;align-items:center;min-height:54px;padding:12px;border:1px solid transparent;background:transparent;text-align:left;color:#c6d2e6;transition:background .15s,border-color .15s}
+.nav-item:hover{background:#1c2a42;border-color:#33415a}
+.nav-item.active{background:#203850;border-color:#3a637b;color:#f5faff}
+.nav-item:focus-visible,.menu-toggle:focus-visible,button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid #65cbea;outline-offset:2px}
+.nav-index{font-size:12px;color:#78cce8;font-variant-numeric:tabular-nums}
+.nav-label{font-size:13px;font-weight:600;line-height:1.35}
+.sidebar-footer{margin-top:auto;padding:20px 12px 0;border-top:1px solid #2b3c55}
+main#mainContent{max-width:none;width:100%;min-width:0;padding:24px 30px 52px}
+.page-header{margin:0 0 22px}
+.page-header p:first-of-type{margin:0 0 9px;font-size:12px;color:#8fa4c0;letter-spacing:.025em}
+.page-header h1{margin:0 0 9px;font-size:clamp(25px,3vw,34px);letter-spacing:-.03em}
+.page-header p:last-child{margin:0;max-width:750px}
+.playground{margin:0}
+.playground[hidden],.nav-backdrop[hidden]{display:none!important}
+.playground h2{margin-top:0}
+.playground .grid>div{min-width:0}
+.plot{width:100%;max-width:100%;min-width:0}
+.panel{min-width:0;overflow-wrap:break-word}
+.panel h3{margin:0 0 10px}
+.panel label{display:inline-flex;align-items:center;gap:9px;margin:4px 13px 10px 0;flex-wrap:wrap;color:#d4e1f1;font-size:14px}
+.panel label select,.panel label input[type=number]{max-width:100%}
+.panel input[type=number]{width:100px;min-height:38px;padding:8px;border:1px solid #58677f;border-radius:7px;background:#243149;color:white;font:inherit}
+.panel input[type=range]{width:min(100%,340px);accent-color:#57c7e9;cursor:pointer}
+.stats{gap:10px;margin:12px 0}
+.stats span{flex:1 1 115px;min-width:0;padding:12px}
+.stats strong{display:block;margin-top:4px}
+.panel .button-group{display:flex;align-items:center;flex-wrap:wrap;gap:7px}
+.panel .button-group button{margin:0}
+.matrix-controls{display:flex;flex-wrap:wrap;align-items:center;gap:14px;margin:16px 0 10px}
+.matrix-controls .slider-row{display:flex;align-items:center;flex:1 1 240px;gap:10px;min-width:0}
+.matrix-controls .slider-row label{margin:0}
+.matrix-controls .slider-row input[type=range]{flex:1;min-width:80px}
+.matrix-controls .slider-row strong{white-space:nowrap;color:#bdeaf8;font-variant-numeric:tabular-nums}
+.walkthrough-summary{margin-top:20px;padding:18px;border:1px solid #32455f;border-radius:10px;background:#111c2e}
+.walkthrough-summary p:last-child{margin-bottom:0}
+#playground-5>.grid>div{display:flex;flex-wrap:wrap;flex-direction:column;align-items:flex-start;gap:4px}
+#playground-5>.grid label{margin-bottom:8px}
+#playground-5>p button{margin-left:0}
+.trace-controls{margin:12px 0}
+.panel table{width:100%;border-collapse:collapse;font-size:13px;line-height:1.45}
+.panel table th,.panel table td{padding:8px 9px;text-align:left;border-bottom:1px solid #2c3b52;vertical-align:top}
+.panel table th{color:#aaccdf;font-weight:600}
+.panel table td{color:#e2eaf5}
+.panel .note{line-height:1.5;overflow-wrap:anywhere}
+.menu-toggle{display:none;align-items:center;gap:9px;margin:0 0 16px;border-color:#3d5974;background:#17263c;font-size:14px}
+.nav-backdrop{display:none}
+@media(max-width:1050px) and (min-width:851px){
+.site-layout{grid-template-columns:218px minmax(0,1fr)}
+main#mainContent{padding:22px}
+.sidebar{padding-left:10px;padding-right:10px}
+}
+@media(max-width:850px){
+.site-layout{display:block}
+.sidebar{position:fixed;inset:0 auto 0 0;width:min(290px,86vw);height:100dvh;min-height:0;transform:translateX(-105%);transition:transform .22s ease;box-shadow:18px 0 42px rgba(0,0,0,.25);z-index:50}
+body.nav-open .sidebar{transform:translateX(0)}
+.nav-backdrop:not([hidden]){display:block;position:fixed;inset:0;background:rgba(3,8,18,.68);z-index:40}
+body.nav-open{overflow:hidden}
+main#mainContent{padding:20px 18px 40px}
+.menu-toggle{display:inline-flex;position:relative;z-index:1}
+.grid{grid-template-columns:1fr}
+}
+@media(max-width:520px){
+main#mainContent{padding:16px 12px 30px}
+.panel{padding:15px 12px}
+.panel .panel{padding:13px 10px}
+h2{font-size:19px}
+.plot{height:330px}
+.stats span{flex:1 1 calc(50% - 10px)}
+.stats strong{font-size:19px}
+.nav-item{min-height:50px}
+.matrix-controls .button-group{width:100%}
+.matrix-controls .button-group button{flex:1}
+#playground-5>.grid>div{gap:2px}
+#playground-5>.grid label{display:flex;width:100%;justify-content:space-between;margin:0 0 12px}
+#playground-5>p button{margin-bottom:5px}
+}
+@media(prefers-reduced-motion:reduce){.sidebar,.nav-item{transition:none}}
+</style></head><body><div class="site-layout">
+<aside class="sidebar" id="sidebar" aria-label="Navegação dos playgrounds">
+  <div class="sidebar-brand"><span class="sidebar-eyebrow">MIPS • CACHE</span><strong>Laboratório</strong><span class="sidebar-caption">Escolha o que quer explorar.</span></div>
+  <nav class="sidebar-links" aria-label="Playgrounds">
+    <button type="button" class="nav-item active" data-playground-target="1" aria-current="page"><span class="nav-index">01</span><span class="nav-label">Mapas de calor</span></button>
+    <button type="button" class="nav-item" data-playground-target="2"><span class="nav-index">02</span><span class="nav-label">Comparação por vias</span></button>
+    <button type="button" class="nav-item" data-playground-target="3"><span class="nav-index">03</span><span class="nav-label">Inspecionar configuração</span></button>
+    <button type="button" class="nav-item" data-playground-target="4"><span class="nav-index">04</span><span class="nav-label">Percurso na matriz</span></button>
+    <button type="button" class="nav-item" data-playground-target="5"><span class="nav-index">05</span><span class="nav-label">Simulador de cache</span></button>
+    <button type="button" class="nav-item" data-playground-target="6"><span class="nav-index">06</span><span class="nav-label">Execução passo a passo</span></button>
+  </nav>
+  <div class="sidebar-footer">256 bytes de cache · 56 medições</div>
+</aside>
+<div id="navBackdrop" class="nav-backdrop" hidden></div>
+<main id="mainContent">
+<header class="page-header">
+<button id="menuToggle" class="menu-toggle" type="button" aria-controls="sidebar" aria-expanded="false" aria-label="Abrir menu">☰ <span>Playgrounds</span></button>
+<p>Arquitetura de computadores · MIPS · 17 × 17 · 289 acessos</p><h1>Cache MIPS na prática</h1><p>São 56 medições com cache de 256 bytes, associatividade por conjuntos e política LRU. Toque ou passe o mouse nos gráficos para conferir os resultados.</p></header><section class="panel playground" id="playground-1"><h2>1. Mapas de calor</h2><p>Veja como o tamanho dos blocos e o número de vias afetam os hits. Os espaços em branco são configurações que não cabem nessa cache.</p><div class="grid"><div id="hr" class="plot"></div><div id="hc" class="plot"></div></div></section><section class="panel playground" id="playground-2" hidden><h2>2. Compare por número de vias</h2><label>Vias <select id="way"></select></label><div id="lines" class="plot"></div></section><section class="panel playground" id="playground-3" hidden><h2>3. Veja uma configuração de perto</h2><label>Palavras/bloco <select id="words"></select></label><label>Vias <select id="ways"></select></label><div class="stats"><span>Conjuntos: <strong id="sets"></strong></span><span>Row-major: <strong id="rr"></strong></span><span>Column-major: <strong id="cr"></strong></span></div><div id="bars" class="plot"></div></section><section class="panel playground" id="playground-4" hidden><h2>4. Acompanhe o percurso na matriz</h2><p>Amarelo é a palavra atual, azul marca as que já foram visitadas e roxo mostra as outras palavras do mesmo bloco. Aqui você vê a ordem dos acessos, sem simular os hits.</p><label>Percurso <select id="mode"><option value="R">Row-major</option><option value="C">Column-major</option></select></label><label>Palavras/bloco <select id="bw"></select></label><div id="matrix" class="matrix"></div><div class="matrix-controls"><div class="button-group"><button id="prev">← Anterior</button><button id="next">Próximo →</button><button id="reset">Reiniciar</button></div><div class="slider-row"><label for="step">Acesso</label><input type="range" id="step" min="0" max="288" value="0"><strong id="count"></strong></div></div><p id="address" class="note"></p><div class="walkthrough-summary"><h3>O que muda entre os percursos?</h3><p><strong>Row-major:</strong> percorre palavras vizinhas, avançando 4 bytes por acesso. Isso ajuda a aproveitar o bloco que já foi carregado. <strong>Column-major:</strong> salta 68 bytes entre as linhas. Alguns blocos podem sair da cache antes de serem usados de novo, dependendo dos conjuntos e do LRU.</p><p>Resultados medidos com os scripts MIPS do laboratório.</p></div></section><section class="panel playground" id="playground-5" hidden><h2>5. Teste sua própria cache</h2><p>Mude a matriz, o tamanho da cache e a política de substituição para comparar os resultados. Cada palavra tem 4 bytes, a cache começa vazia e os blocos são distribuídos entre conjuntos.</p><div class="grid"><div><label>Dimensão N × N <input id="sN" type="number" min="2" max="64" value="17"></label><label>Capacidade (palavras) <select id="sC"><option>16</option><option>32</option><option selected>64</option><option>128</option><option>256</option><option>512</option></select></label><label>Palavras/bloco <select id="sB"></select></label></div><div><label>Vias <select id="sA"></select></label><label>Política <select id="sP"><option>LRU</option><option>FIFO</option></select></label><label>Percurso <select id="sO"><option value="row">Row-major</option><option value="column">Column-major</option></select></label></div></div><p><button id="sRun">Simular</button><button id="sCompare">Comparar percursos</button><button id="sCsv">Exportar CSV</button></p><p id="sMsg" role="status"></p><div class="stats"><span>Acessos: <strong id="sTotal">—</strong></span><span>Hits: <strong id="sHits">—</strong></span><span>Misses: <strong id="sMisses">—</strong></span><span>Taxa: <strong id="sRate">—</strong></span><span>Conjuntos: <strong id="sSets">—</strong></span></div><div id="sPlot" class="plot"></div></section><section class="panel playground" id="playground-6" hidden><h2>6. Veja cada acesso</h2><p>Acompanhe os hits, misses e blocos armazenados durante cada percurso. Os dois têm controles separados e usam a configuração escolhida no simulador.</p><div class="panel" style="margin:10px 0"><h3>Script row-major</h3><p>Avança pelas linhas. Você pode pausar e voltar sem mexer no outro percurso.</p><div class="button-group trace-controls"><button id="rowPrev">← Anterior</button> <button id="rowNext">Próximo →</button> <button id="rowPlay">Reproduzir</button> <button id="rowReset">Reiniciar</button></div><input id="rowStep" type="range" min="0" max="288" value="0" style="width:100%"><p id="rowDetail" class="note"></p><div class="stats"><span>Hits até aqui: <strong id="rowHits">0</strong></span><span>Misses até aqui: <strong id="rowMisses">0</strong></span></div><div class="grid"><div style="max-height:350px;overflow:auto"><h3>Conjuntos</h3><table id="rowCache" style="width:100%;text-align:left"></table></div><div style="max-height:350px;overflow:auto"><h3>Últimos 15 acessos</h3><table id="rowTrace" style="width:100%;text-align:left"></table></div></div></div><div class="panel" style="margin:10px 0"><h3>Script column-major</h3><p>Avança pelas colunas. Você pode pausar e voltar sem mexer no outro percurso.</p><div class="button-group trace-controls"><button id="colPrev">← Anterior</button> <button id="colNext">Próximo →</button> <button id="colPlay">Reproduzir</button> <button id="colReset">Reiniciar</button></div><input id="colStep" type="range" min="0" max="288" value="0" style="width:100%"><p id="colDetail" class="note"></p><div class="stats"><span>Hits até aqui: <strong id="colHits">0</strong></span><span>Misses até aqui: <strong id="colMisses">0</strong></span></div><div class="grid"><div style="max-height:350px;overflow:auto"><h3>Conjuntos</h3><table id="colCache" style="width:100%;text-align:left"></table></div><div style="max-height:350px;overflow:auto"><h3>Últimos 15 acessos</h3><table id="colTrace" style="width:100%;text-align:left"></table></div></div></div></section></main></div><script>
 const W=[64,32,16,8,4,2,1],A=[1,2,4,8,16,32,64];
 const rowHits={64:284,32:279,16:270,8:252,4:216,2:144,1:0};
 const columnHits={64:[204],32:[135,135],16:[0,0,0],8:[8,0,0,0],4:[172,136,0,0,0],2:[136,136,136,136,136,136],1:[0,0,0,0,0,0,0]};
 const rate=n=>+(100*n/289).toFixed(2),get=(m,w,a)=>{let i=A.indexOf(a);if(i<0||a>64/w)return null;return m==='R'?rowHits[w]:columnHits[w][i]};
 const base={paper_bgcolor:'#151d30',plot_bgcolor:'#151d30',font:{color:'#eaf0fa'},margin:{l:70,r:30,t:50,b:55}},cfg={responsive:true,displaylogo:false};
 function heat(id,m,title){let z=W.map(w=>A.map(a=>{let h=get(m,w,a);return h===null?null:rate(h)}));Plotly.newPlot(id,[{type:'heatmap',x:A.map(String),y:W.map(String),z,zmin:0,zmax:100,colorscale:'Viridis',text:z.map(r=>r.map(v=>v===null?'':v.toFixed(1)+'%')),texttemplate:'%{text}',hovertemplate:'Bloco: %{y} palavras<br>Vias: %{x}<br>Taxa de hits: %{z:.2f}%<extra></extra>',colorbar:{title:'%'}}],{...base,title,xaxis:{title:'Vias',type:'category'},yaxis:{title:'Palavras/bloco',type:'category'}},cfg)}
-heat('hr','R','Row-major');heat('hc','C','Column-major');
+
 const opt=(s,arr,unit)=>{s.innerHTML='';arr.forEach(v=>s.add(new Option(v+' '+unit,v)))};
 opt(way,A,'vias');way.value='1';opt(words,W,'palavras');words.value='4';opt(bw,W,'palavras');bw.value='4';
 function lines(){let a=+way.value;let traces=['R','C'].map((m,i)=>{let d=W.filter(w=>get(m,w,a)!==null);return{type:'scatter',mode:'lines+markers',name:m==='R'?'Row-major':'Column-major',x:d.map(String),y:d.map(w=>rate(get(m,w,a))),line:{color:i?'#ffb45e':'#57c7e9',width:3},marker:{size:10},hovertemplate:'%{x} palavras por bloco<br>Taxa de hits: %{y:.2f}%<extra>%{fullData.name}</extra>'}});Plotly.react('lines',traces,{...base,xaxis:{title:'Palavras/bloco',type:'category',categoryorder:'array',categoryarray:W.map(String)},yaxis:{title:'Taxa de hits (%)',range:[0,105]},legend:{orientation:'h',y:1.2}},cfg)}
-way.onchange=lines;lines();
+way.onchange=lines;
 function resetWays(){let n=64/+words.value;opt(ways,A.filter(a=>a<=n),'vias');ways.value='1';bars()}
 function bars(){let w=+words.value,a=+ways.value,r=get('R',w,a),c=get('C',w,a);sets.textContent=(64/w/a);rr.textContent=rate(r)+'%';cr.textContent=rate(c)+'%';Plotly.react('bars',[{type:'bar',orientation:'h',name:'Hits',y:['Row-major','Column-major'],x:[r,c],marker:{color:'#57c7e9'}},{type:'bar',orientation:'h',name:'Misses',y:['Row-major','Column-major'],x:[289-r,289-c],marker:{color:'#ffb45e'}}],{...base,barmode:'stack',xaxis:{title:'Acessos',range:[0,300]},legend:{orientation:'h',y:1.2},margin:{l:115,r:20,t:50,b:55}},cfg)}
-words.onchange=resetWays;ways.onchange=bars;resetWays();
-for(let i=0;i<289;i++){let el=document.createElement('div');el.className='cell';el.title='matriz['+Math.floor(i/17)+']['+(i%17)+']';matrix.append(el)}
+words.onchange=resetWays;ways.onchange=bars;
+function setupMatrix(){if(matrix.children.length)return;for(let i=0;i<289;i++){let el=document.createElement('div');el.className='cell';el.title='matriz['+Math.floor(i/17)+']['+(i%17)+']';matrix.append(el)}matrixDraw()}
 let pos=0;function matrixDraw(){let m=mode.value,w=+bw.value,seq=Array.from({length:289},(_,i)=>m==='R'?i:(i%17)*17+Math.floor(i/17)),cur=seq[pos],start=Math.floor(cur/w)*w,visited=new Set(seq.slice(0,pos));Array.from(matrix.children).forEach((el,i)=>{el.className='cell'+(visited.has(i)?' visited':'')+(i>=start&&i<start+w?' block':'')+(i===cur?' current':'')});step.value=pos;count.textContent=(pos+1)+'/289';address.textContent='matriz['+Math.floor(cur/17)+']['+(cur%17)+'] · endereço '+cur*4+' bytes · bloco '+Math.floor(cur/w)+(pos?' · salto '+((cur-seq[pos-1])*4)+' bytes':'')}
-prev.onclick=()=>{pos=Math.max(0,pos-1);matrixDraw()};next.onclick=()=>{pos=Math.min(288,pos+1);matrixDraw()};reset.onclick=()=>{pos=0;matrixDraw()};step.oninput=()=>{pos=+step.value;matrixDraw()};mode.onchange=matrixDraw;bw.onchange=matrixDraw;matrixDraw();
+prev.onclick=()=>{pos=Math.max(0,pos-1);matrixDraw()};next.onclick=()=>{pos=Math.min(288,pos+1);matrixDraw()};reset.onclick=()=>{pos=0;matrixDraw()};step.oninput=()=>{pos=+step.value;matrixDraw()};mode.onchange=matrixDraw;bw.onchange=matrixDraw;
+const initializedStaticPanels=new Set();
+window.initStaticPlayground=function(n){
+ if(initializedStaticPanels.has(n))return;
+ initializedStaticPanels.add(n);
+ if(n===1){heat('hr','R','Row-major');heat('hc','C','Column-major')}
+ else if(n===2){lines()}
+ else if(n===3){resetWays()}
+ else if(n===4){setupMatrix()}
+};
 </script><script>(()=>{'use strict';
 const $=id=>document.getElementById(id),N=$('sN'),C=$('sC'),B=$('sB'),A=$('sA'),P=$('sP'),O=$('sO');
 function options(el,arr,preferred){let old=preferred??+el.value;el.replaceChildren(...arr.map(x=>new Option(x,x)));el.value=arr.includes(old)?old:arr[0]}
@@ -29,9 +141,110 @@ function draw(){if(!result)return;let t=result.log[position];$(key+'Step').value
 function move(n){position=Math.min(result.log.length-1,Math.max(0,position+n));draw();if(position===result.log.length-1)stop()}
 $(key+'Prev').onclick=()=>{stop();move(-1)};$(key+'Next').onclick=()=>{stop();move(1)};$(key+'Reset').onclick=()=>{stop();position=0;draw()};$(key+'Step').oninput=e=>{stop();position=+e.target.value;draw()};$(key+'Play').onclick=()=>{if(timer!==null){stop();return}if(position===result.log.length-1)position=0;$(key+'Play').textContent='Pausar';timer=setInterval(()=>move(1),130)};
 return {load(r){stop();result=r;position=0;$(key+'Step').max=r.log.length-1;draw()},stop}}
-const row=controller('row'),col=controller('col');let current=null;
-function run(compare=false){let n=+N.value;if(!Number.isInteger(n)||n<2||n>64){$('sMsg').textContent='Use um número inteiro entre 2 e 64 para a dimensão.';return}let p={n,c:+C.value,b:+B.value,a:+A.value,policy:P.value},rr=simulate(p,'row'),cc=simulate(p,'column');row.load(rr);col.load(cc);current=O.value==='row'?rr:cc;$('sTotal').textContent=current.log.length;$('sHits').textContent=current.hits;$('sMisses').textContent=current.misses;$('sRate').textContent=(100*current.hits/current.log.length).toFixed(2)+'%';$('sSets').textContent=current.count;$('sMsg').textContent='Os dois percursos foram reiniciados com essa configuração.';if(window.Plotly){let labels=compare?['Row-major','Column-major']:[O.value==='row'?'Row-major':'Column-major'];Plotly.react('sPlot',[{type:'bar',name:'Hits',x:labels,y:compare?[rr.hits,cc.hits]:[current.hits],marker:{color:'#57c7e9'}},{type:'bar',name:'Misses',x:labels,y:compare?[rr.misses,cc.misses]:[current.misses],marker:{color:'#ffb45e'}}],{paper_bgcolor:'#151d30',plot_bgcolor:'#151d30',font:{color:'#eaf0fa'},barmode:'stack',yaxis:{title:'Acessos'},margin:{l:55,r:20,t:30,b:50}},{responsive:true,displaylogo:false})}}
+const row=controller('row'),col=controller('col');let current=null,lastResults=null,lastCompare=false;
+function run(compare=false){let n=+N.value;if(!Number.isInteger(n)||n<2||n>64){$('sMsg').textContent='Use um número inteiro entre 2 e 64 para a dimensão.';return}let p={n,c:+C.value,b:+B.value,a:+A.value,policy:P.value},rr=simulate(p,'row'),cc=simulate(p,'column');row.load(rr);col.load(cc);current=O.value==='row'?rr:cc;$('sTotal').textContent=current.log.length;$('sHits').textContent=current.hits;$('sMisses').textContent=current.misses;$('sRate').textContent=(100*current.hits/current.log.length).toFixed(2)+'%';$('sSets').textContent=current.count;$('sMsg').textContent='Os dois percursos foram reiniciados com essa configuração.';lastResults={rr,cc};lastCompare=compare;plotCurrent()}
+function plotCurrent(){
+ if(!current||!window.Plotly||document.getElementById('playground-5').hidden)return;
+ let {rr,cc}=lastResults,compare=lastCompare;
+ let labels=compare?['Row-major','Column-major']:[O.value==='row'?'Row-major':'Column-major'];Plotly.react('sPlot',[{type:'bar',name:'Hits',x:labels,y:compare?[rr.hits,cc.hits]:[current.hits],marker:{color:'#57c7e9'}},{type:'bar',name:'Misses',x:labels,y:compare?[rr.misses,cc.misses]:[current.misses],marker:{color:'#ffb45e'}}],{paper_bgcolor:'#151d30',plot_bgcolor:'#151d30',font:{color:'#eaf0fa'},barmode:'stack',yaxis:{title:'Acessos'},margin:{l:55,r:20,t:30,b:50}},{responsive:true,displaylogo:false})
+}
+window.ensureSimulationActive=function(panel){
+ if(!current)run();
+ else if(panel===5)plotCurrent();
+};
+window.pauseSimulation=function(){row.stop();col.stop()};
+
 $('sRun').onclick=()=>run();$('sCompare').onclick=()=>run(true);
 $('sCsv').onclick=()=>{if(!current)return;let keys=['step','row','col','address','block','set','tag','hit','evicted','hits','misses'],csv=[keys.join(','),...current.log.map(t=>keys.map(k=>t[k]===null?'':t[k]).join(','))].join('\n'),url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'})),a=document.createElement('a');a.href=url;a.download='cache-trace-'+O.value+'.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)};
-run();
-})();</script></body></html>
+})();</script>
+<script>
+(()=>{
+  'use strict';
+  const pages=Array.from(document.querySelectorAll('.playground'));
+  const menu=document.getElementById('sidebar');
+  const toggle=document.getElementById('menuToggle');
+  const backdrop=document.getElementById('navBackdrop');
+  const links=Array.from(document.querySelectorAll('[data-playground-target]'));
+  const chartIds={1:['hr','hc'],2:['lines'],3:['bars'],5:['sPlot']};
+  let selected=null;
+
+  function closeMenu(){
+    document.body.classList.remove('nav-open');
+    menu.inert=window.innerWidth<=850;
+    toggle.setAttribute('aria-expanded','false');
+    toggle.setAttribute('aria-label','Abrir menu');
+    backdrop.hidden=true;
+  }
+
+  function openMenu(){
+    menu.inert=false;
+    document.body.classList.add('nav-open');
+    toggle.setAttribute('aria-expanded','true');
+    toggle.setAttribute('aria-label','Fechar menu');
+    backdrop.hidden=false;
+  }
+
+  function resizeVisiblePlot(){
+    const ids=chartIds[selected]||[];
+    for(const id of ids){
+      const el=document.getElementById(id);
+      if(el&&el.data&&window.Plotly){
+        try{const result=Plotly.Plots.resize(el);if(result&&result.catch)result.catch(()=>{})}catch(_){}
+      }
+    }
+  }
+
+  function showPlayground(n,fromClick=false){
+    if(!Number.isInteger(n)||n<1||n>6)n=1;
+    if(selected===6&&n!==6&&window.pauseSimulation)window.pauseSimulation();
+    selected=n;
+    for(const section of pages)section.hidden=section.id!=='playground-'+n;
+    for(const link of links){
+      const active=Number(link.dataset.playgroundTarget)===n;
+      link.classList.toggle('active',active);
+      if(active)link.setAttribute('aria-current','page');
+      else link.removeAttribute('aria-current');
+    }
+    closeMenu();
+    if(n<=4)window.initStaticPlayground(n);
+    else window.ensureSimulationActive(n);
+    requestAnimationFrame(()=>{resizeVisiblePlot()});
+    setTimeout(resizeVisiblePlot,120);
+    if(fromClick){
+      const heading=document.querySelector('#playground-'+n+' h2');
+      if(heading){heading.tabIndex=-1;heading.focus({preventScroll:true})}
+      window.scrollTo({top:0,behavior:'instant'});
+    }
+  }
+
+  function pageFromHash(){
+    const match=location.hash.match(/^#playground-([1-6])$/);
+    return match?Number(match[1]):1;
+  }
+
+  for(const link of links){
+    link.addEventListener('click',()=>{
+      const n=Number(link.dataset.playgroundTarget);
+      if(location.hash!=='#playground-'+n)history.pushState(null,'','#playground-'+n);
+      showPlayground(n,true);
+    });
+  }
+  toggle.addEventListener('click',()=>document.body.classList.contains('nav-open')?closeMenu():openMenu());
+  backdrop.addEventListener('click',closeMenu);
+  document.addEventListener('keydown',event=>{
+    if(event.key==='Escape'&&document.body.classList.contains('nav-open')){
+      closeMenu();
+      toggle.focus();
+    }
+  });
+  window.addEventListener('popstate',()=>showPlayground(pageFromHash()));
+  window.addEventListener('hashchange',()=>showPlayground(pageFromHash()));
+  window.addEventListener('resize',()=>{
+    if(window.innerWidth>850)closeMenu();
+    else menu.inert=!document.body.classList.contains('nav-open');
+    requestAnimationFrame(resizeVisiblePlot);
+  });
+  showPlayground(pageFromHash());
+})();
+</script>
+</body></html>
